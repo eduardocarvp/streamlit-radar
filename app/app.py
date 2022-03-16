@@ -6,7 +6,11 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from collections import OrderedDict
+from categories.lawton_scale import LawtonScale
 
+st.set_page_config(layout="wide")
+
+col1, col2 = st.columns(2)
 
 def get_min_max_value(dictionary):
     return (
@@ -29,36 +33,38 @@ categories = OrderedDict(
     ]
 )
 
-for cat in categories:
-    categories[cat]["value"] = st.slider(
-        cat,
-        min_value=categories[cat]["min_value"],
-        max_value=categories[cat]["max_value"],
-        value=None,
-        step=1,
-    )
+with col1:
+    for cat in categories:
+        categories[cat]["value"] = st.slider(
+            cat,
+            min_value=categories[cat]["min_value"],
+            max_value=categories[cat]["max_value"],
+            value=None,
+            step=1,
+        )
 
+    le = LawtonScale()
+    le.render()
 
 df = pd.DataFrame(
     {
-        "r": [get_min_max_value(categories[cat]) for cat in categories],
-        "real_values": [categories[cat]["value"] for cat in categories],
-        "theta": categories.keys(),
+        "r": [get_min_max_value(categories[cat]) for cat in categories] + [100* (le.value - le.min) / (le.max - le.min)],
+        "real_values": [categories[cat]["value"] for cat in categories] + [le.value],
+        "theta": list(categories.keys()) + ["lawton"],
     }
 )
 
-template = st.selectbox("Select graph template", ["plotly_dark", "seaborn"])
+with col2:
+    fig = px.line_polar(
+        df,
+        r="r",
+        theta="theta",
+        line_close=True,
+        template="plotly_dark",
+        range_r=[0, 100],
+        hover_data=["real_values"],
+    )
+    fig.update_traces(fill='toself')
 
-fig = px.line_polar(
-    df,
-    r="r",
-    theta="theta",
-    line_close=True,
-    template=template,
-    range_r=[0, 100],
-    hover_data=["real_values"],
-)
-
-
-st.plotly_chart(fig)
-st.write(df)
+    st.plotly_chart(fig)
+    st.write(df)

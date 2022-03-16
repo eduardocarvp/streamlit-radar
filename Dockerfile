@@ -9,5 +9,7 @@ COPY /app .
 
 EXPOSE 8501
 
+ENV PYTHONPATH="$PYTHONPATH:/app"
+
 ENTRYPOINT ["streamlit", "run"]
 CMD ["app.py"]
